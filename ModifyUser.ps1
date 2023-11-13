@@ -1,38 +1,37 @@
 param($path,$delimiter=';')
-# Charger le contenu du CSV
+# Load CSV content
 $csvData = Import-Csv -Delimiter $delimiter -Path $path
 
-# Parcourir chaque ligne du CSV
+# Browse each line of the CSV
 foreach ($entry in $csvData) {
-    # Récupérer les informations nécessaires
+    # Retrieve the necessary information
     $oldUsername = $entry.Username
-    $newLastName = $entry.NouveauNom
-    $newFirstName = $entry.NouveauPrenom
-    $newOU = $entry.NouveauOU
-    $newSecurityGroup = $entry.NouveauGroupeSecurite
+    $newLastName = $entry.LastName
+    $newFirstName = $entry.FirstName
+    $newOU = $entry.OU
+    $newSecurityGroup = $entry.SecurityGroup
 
-    # Rechercher l'utilisateur dans Active Directory
+    # Find user in Active Directory
     $user = Get-ADUser -Filter {SamAccountName -eq $oldUsername}
 
-    # Vérifier si l'utilisateur a été trouvé
+    # Check if the user has been found
     if ($user) {
-        # Mettre à jour les informations de l'utilisateur
+        # Update user information
         Set-ADUser -Identity $oldUsername -Surname $newLastName -GivenName $newFirstName 
         
-        # Déplacer l'utilisateur vers l'unité organisationnelle spécifiée
+        # Move user to specified organizational unit
         if ($newOU) {
             Move-ADObject -Identity $user.DistinguishedName -TargetPath $newOU
         }
 
-        # Ajouter l'utilisateur au groupe de sécurité spécifié
+        # Add user to specified security group
         if ($newSecurityGroup) {
             Add-ADGroupMember -Identity $newSecurityGroup -Members $user
         }
-
-        Write-Host "Les informations de $oldUsername ont été mises à jour."
+        Write-Host "$oldUsername information has been updated."
     } else {
-        Write-Host "Utilisateur $oldUsername non trouvé dans Active Directory."
+        Write-Host "User $oldUsername not found in Active Directory."
     }
 }
 
-Write-Host "Modification des utilisateurs terminée."
+Write-Host "User modification complete."
