@@ -1,4 +1,4 @@
-﻿# This script creates active directory users based on the contents of a csv file with the structure shown on the next two lines.
+# This script creates active directory users based on the contents of a csv file with the structure shown on the next two lines.
 # userLogonName;firstName;lastName;OU;securityGroup
 # Euan;Euan;Cockburn;utilisateurs;etudiants
 
@@ -51,12 +51,15 @@ Write-Host "Results will be written to $exportPath"
 $export | ForEach-Object{
     $user = $_
     $name = $user.firstName
+    $surname = $user.lastName
+    $group = $user.securityGroup
     $OU = $user.OU
     $samName = $user.userLogonName
+    $UPN = $user.userLogonName
     $exists = [bool] (Get-ADUser -Filter {SamAccountName -eq $name})
     
     if ($exists){
-        Write-Host "user $name already exists"
+        Write-Host "user $name already exists" -ForegroundColor Red
         $user.initialPassword = 'N/A'
         $user.existsAlready = 'True'
     } else {
@@ -64,8 +67,9 @@ $export | ForEach-Object{
         $user.initialPassword = $psswrd
         $user.existsAlready = 'False'
 
-        New-ADUser -AccountPassword $passwrd -Name $name -SamAccountName $samName -Path "OU=$OU,DC=blaze,DC=lab"
-        Write-Host "creating user $name with password : $psswrd" -ForegroundColor Cyan
+        New-ADUser -AccountPassword $passwrd -Name $name -Surname -SamAccountName $samName -UserPrincipalName $UPN -Path "OU=$OU,DC=blaze,DC=lab"
+        Add-ADGroupMember -Identity $group -Member $samName
+        Write-Host "creating user $name with password : $psswrd" -ForegroundColor Green
     }
 }
 
