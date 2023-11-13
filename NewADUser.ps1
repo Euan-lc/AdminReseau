@@ -51,8 +51,11 @@ Write-Host "Results will be written to $exportPath"
 $export | ForEach-Object{
     $user = $_
     $name = $user.firstName
+    $surname = $user.lastName
+    $group = $user.securityGroup
     $OU = $user.OU
     $samName = $user.userLogonName
+    $UPN = $user.userLogonName
     $exists = [bool] (Get-ADUser -Filter {SamAccountName -eq $name})
     
     if ($exists){
@@ -64,7 +67,8 @@ $export | ForEach-Object{
         $user.initialPassword = $psswrd
         $user.existsAlready = 'False'
 
-        New-ADUser -AccountPassword $passwrd -Name $name -SamAccountName $samName -Path "OU=$OU,DC=blaze,DC=lab"
+        New-ADUser -AccountPassword $passwrd -Name $name -Surname -SamAccountName $samName -UserPrincipalName $UPN -Path "OU=$OU,DC=blaze,DC=lab"
+        Add-ADGroupMember -Identity $group -Member $samName
         Write-Host "creating user $name with password : $psswrd" -ForegroundColor Cyan
     }
 }
